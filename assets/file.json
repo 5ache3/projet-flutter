@@ -3,6 +3,7 @@
       "id":"skhf834ry3hewr983rwej",
       "surface":"250m",
       "adminid":"w9yr3rh0rr",
+
       "region":"adrar",
       "ville":"atar",
       "type":"maison",
@@ -10,6 +11,25 @@
       "price":"22,000$",
       "images":[
          {"main":true,"url":"assets/images/house1_1.jpg"},
+         {"main":false,"url":"assets/images/house1_2.jpg"},
+         {"main":false,"url":"assets/images/house1_3.jpg"}
+      ],
+      "rooms":[
+         {"type":"maison","url":""}
+      ]
+
+   },
+   {
+      "id":"skhf834ry3hewr9837rwej",
+      "surface":"250m",
+      "adminid":"w9yr3rh0rr",
+      "region":"adrar",
+      "ville":"atar",
+      "type":"maison",
+      "location":"https://maps.app.goo.gl/HPXvVCwkB3nKYBmk8",
+      "price":"22,000$",
+      "images":[
+         {"main":true,"url":"assets/images/house1_3.jpg"},
          {"main":false,"url":"assets/images/house1_2.jpg"},
          {"main":false,"url":"assets/images/house1_3.jpg"}
       ],

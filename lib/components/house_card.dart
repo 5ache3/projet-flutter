@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
-
-class CustomImage {
-  final bool isMainImage;
-  final String url;
-
-  CustomImage({required this.isMainImage, required this.url});
-}
+import 'package:projet/components/imagesSlider.dart';
+import 'package:projet/modals/CustomImage.dart';
 
 class Room {
   final String type;
@@ -48,11 +43,11 @@ class _HouseCardState extends State<HouseCard> {
   @override
   Widget build(BuildContext context) {
     // Find main image or fallback to the first one
-    final mainImage = widget.images.firstWhere(
-      (img) => img.isMainImage,
-      orElse: () => widget.images.first,
-    );
-    final mainImageUrl=mainImage.url;
+    // final mainImage = widget.images.firstWhere(
+    //   (img) => img.isMainImage,
+    //   orElse: () => widget.images.first,
+    // );
+    // final mainImageUrl=mainImage.url;
 
     return Card(
       elevation: 4,
@@ -62,17 +57,7 @@ class _HouseCardState extends State<HouseCard> {
         children: [
           Stack(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(15),
-                ),
-                child: Image.asset(
-                  mainImage.url.replaceFirst('/',''),
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
+              ImageSlider(images: widget.images),
               Positioned(
                 bottom: 10,
                 right: 10,

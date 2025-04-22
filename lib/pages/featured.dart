@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:projet/components/house_card.dart';
+import 'package:projet/components/house_card_caller.dart';
 
 class Featured_page extends StatefulWidget {
   const Featured_page({super.key});
@@ -29,44 +29,17 @@ class _Featured_pageState extends State<Featured_page> {
 
   @override
   Widget build(BuildContext context) {
-    return _items.isEmpty
-        ? ElevatedButton(
-          onPressed: () {
-            readFile();
-          },
-          child: Center(child: Text("load ")),
-        )
-        : Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: HouseCard(
-                      id: _items[index]['id'],
-                      surface: _items[index]['surface'],
-                      adminid: _items[index]['adminid'],
-                      region: _items[index]['region'],
-                      ville: _items[index]['ville'],
-                      type: _items[index]['type'],
-                      location: _items[index]['location'],
-                      price: _items[index]['price'],
-                      images:
-                          (_items[index]['images'] as List)
-                              .map(
-                                (img) => CustomImage(
-                                  isMainImage: img['main'] ?? false,
-                                  url: img['url'] ?? '',
-                                ),
-                              )
-                              .toList(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: _items.length,
+            itemBuilder: (context, index) {
+              return ListTile(title: HouseCardCaller(file: _items[index]));
+            },
+          ),
+        ),
+      ],
+    );
   }
 }
