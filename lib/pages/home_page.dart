@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projet/pages/featured.dart';
 import 'package:projet/pages/favorite.dart';
+import 'package:projet/pages/publish_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,7 +11,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List _pages = [Featured_page(), FavoritePage()];
+  List _pages = [Featured_page(), Favorite_page(), PublishPage()];
   int _currentIndex = 0;
   @override
   Widget build(BuildContext context) {
@@ -36,6 +37,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.heart_broken),
             label: "Favorite",
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Create"),
         ],
       ),
     );

@@ -10,10 +10,16 @@ environment:
 
 
 dependencies:
+  http: ^1.1.0
   flutter:
     sdk: flutter
+  uuid: ^4.0.0
   cupertino_icons: ^1.0.8
   another_carousel_pro: ^1.0.2
+  image_picker: ^1.0.4
+  google_fonts: ^6.1.0
+  path: ^1.9.0
+  path_provider: ^2.1.2
 
 dev_dependencies:
   flutter_test:
@@ -28,5 +34,6 @@ flutter:
   assets:
     - assets/file.json
     - assets/images/
+    - api/static/uploads/
   
 

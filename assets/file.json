@@ -1,41 +1,66 @@
 [
    {
-      "id":"skhf834ry3hewr983rwej",
-      "surface":"250m",
-      "adminid":"w9yr3rh0rr",
-
-      "region":"adrar",
-      "ville":"atar",
-      "type":"maison",
-      "location":"https://maps.app.goo.gl/HPXvVCwkB3nKYBmk8",
-      "price":"22,000$",
-      "images":[
-         {"main":true,"url":"assets/images/house1_1.jpg"},
-         {"main":false,"url":"assets/images/house1_2.jpg"},
-         {"main":false,"url":"assets/images/house1_3.jpg"}
+      "admin_id": "1",
+      "description": "house 1",
+      "id": "35298700175d4fdf8547e2f143b5f8ff",
+      "images": [
+         {
+            "main": false,
+            "url": "api/static/uploads/4a479d94974f44de8cf6c94211ddea39.png"
+         },
+         {
+            "main": false,
+            "url": "api/static/uploads/192ea3692b5c492da43d4db8aab37d64.png"
+         },
+         {
+            "main": true,
+            "url": "api/static/uploads/baf1fbaa305c451e9ac493ddd6c8b6fe.png"
+         },
+         {
+            "main": false,
+            "url": "api/static/uploads/94fc4325a17643b5bc926c3a6bf4395e.png"
+         },
+         {
+            "main": false,
+            "url": "api/static/uploads/2f8190ffd1334d38a12062cf5afa3274.png"
+         },
+         {
+            "main": false,
+            "url": "api/static/uploads/b0c98966550448ef9aa5ab5090bc2bc5.png"
+         }
       ],
-      "rooms":[
-         {"type":"maison","url":""}
-      ]
-
+      "location": "23013.132.132",
+      "nb_rooms": 6,
+      "price": "25,000,000",
+      "region": "nouadhibou",
+      "surface": "250",
+      "type": "house",
+      "ville": "nouadhibou"
    },
    {
-      "id":"skhf834ry3hewr9837rwej",
-      "surface":"250m",
-      "adminid":"w9yr3rh0rr",
-      "region":"adrar",
-      "ville":"atar",
-      "type":"maison",
-      "location":"https://maps.app.goo.gl/HPXvVCwkB3nKYBmk8",
-      "price":"22,000$",
-      "images":[
-         {"main":true,"url":"assets/images/house1_3.jpg"},
-         {"main":false,"url":"assets/images/house1_2.jpg"},
-         {"main":false,"url":"assets/images/house1_3.jpg"}
+      "admin_id": "1",
+      "description": "house 2",
+      "id": "38900756fb80473cb25a372ab2abce35",
+      "images": [
+         {
+            "main": false,
+            "url": "api/static/uploads/d34f9699df3644618fee5ff2ec0d9286.jpg"
+         },
+         {
+            "main": true,
+            "url": "api/static/uploads/9a3b512201864576a3e7957390585064.jpg"
+         },
+         {
+            "main": false,
+            "url": "api/static/uploads/75dfc251bf7941c8a158cbf4e60e72d3.jpg"
+         }
       ],
-      "rooms":[
-         {"type":"maison","url":""}
-      ]
-
+      "location": "12222222222,213123",
+      "nb_rooms": 4,
+      "price": "12,000,000",
+      "region": "nkt",
+      "surface": "100",
+      "type": "house",
+      "ville": "tvz"
    }
 ]
