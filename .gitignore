@@ -11,7 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-api/static/uploads
+# api/static/uploads
 # IntelliJ related
 *.iml
 *.ipr
@@ -24,7 +24,7 @@ api/static/uploads
 #.vscode/
 
 # Flutter/Dart/Pub related
-**/doc/api/
+# **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
