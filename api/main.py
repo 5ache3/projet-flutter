@@ -2,7 +2,12 @@ import os
 import uuid
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from werkzeug.utils import secure_filename
+from passlib.hash import bcrypt
 import mysql.connector
+import base64
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
 
 db=mysql.connector.connect(
     host="127.0.0.1",
@@ -24,13 +29,14 @@ def allowed_file(filename):
 
 def handle_image(file):
     image_path = None
-    if file and allowed_file(file.filename):
-        unique=uuid.uuid4().hex
-        filename = f"{unique}.{file.filename.split('.')[-1]}"
-        
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        image_path=os.path.join('api',app.config['UPLOAD_FOLDER'],filename)
-        image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
+    unique=uuid.uuid4().hex
+    filename = f"{unique}.jpg"
+
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'wb') as f:
+        f.write(file)
+
+    image_path=os.path.join('api',app.config['UPLOAD_FOLDER'],filename)
+    image_path = f"{app.config['UPLOAD_FOLDER']}/{filename}"
     return image_path
 
 def push_images(images,house_id):
@@ -58,28 +64,72 @@ def delete_image(url):
 
 
 
+@app.route('/register',methods=['POST'])
+
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    pool.execute("SELECT * FROM users WHERE username =%s",(username,))
+    exist=pool.fetchall()
+    if exist:
+        return jsonify({"error": "User already exists"}), 400
+    hashed_password=bcrypt.hash(password)
+    user_id = uuid.uuid4().hex
+    pool.execute("INSERT INTO users(id,username,password,role) VALUES(%s,%s,%s,'user')",(user_id,username,hashed_password))
+    db.commit()
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    pool.execute("SELECT user_id,username,password,role FROM users WHERE username =%s",(username,))
+    user=pool.fetchone()
+
+    if not user:
+        return jsonify({"error": "username not found"}), 400
+    
+    if not bcrypt.verify(password, user[2]):
+        return jsonify({"error": "wrong password"}), 403
+    
+    user_id=user[0]
+    username=user[1]
+    role=[3]
+    access_token = create_access_token(identity={
+        'username': username,
+        'user_id': user_id,
+        'role': role
+    })
+
+    return jsonify(access_token=access_token), 200
+
+
 @app.route('/create', methods=['GET', 'POST'])
 def create():
     admin_id = '1'
     if request.method == 'POST':
         try:
-            description = request.form['description']
-            price = request.form['price']
-            surface = request.form['surface']
-            nm_rooms = request.form['nb_rooms']
-            type = request.form['type']
-            location = request.form['location']
-            ville = request.form['city']
-            region = request.form['region']
-            file = request.files['mainImage']
-            files = request.files.getlist('images[]')
+            data = request.get_json()
+            description = data['description']
+            price = data['price']
+            surface = data['surface']
+            nm_rooms = data['nb_rooms']
+            type = data['type']
+            location = data['location']
+            ville = data['city']
+            region = data['region']
+
+            main_image_b64 = data['mainImage']
+            interior_images_b64 = data['images']
             images = []
-            main_image = handle_image(file)
+
+            main_image = handle_image(base64.b64decode(main_image_b64))
             if main_image:
                 images.append({'main': True, 'url': main_image})
 
-            for f in files:
-                image = handle_image(f)
+            for f in interior_images_b64:
+                image = handle_image(base64.b64decode(f))
                 images.append({'main': False, 'url': image})
 
             house_id = uuid.uuid4().hex
@@ -90,11 +140,11 @@ def create():
             db.commit()
 
             push_images(images, house_id)
-            return index()
+            return jsonify({'success':'created'}),200
 
         except Exception as e:
-            return {'error':str(e)},500
             print("Error:", e)
+            return jsonify({'error':str(e)}),500
     
     return render_template('create.html')
 
@@ -143,6 +193,8 @@ def delete_house(id):
         for image in images:
             delete_image(image['url'])
         pool.execute("DELETE FROM images WHERE house_id = %s", (id,))
+        db.commit()
+        pool.execute("DELETE FROM favorite WHERE house_id = %s", (id,))
         db.commit()
         pool.execute("DELETE FROM houses WHERE id = %s", (id,))
         db.commit()

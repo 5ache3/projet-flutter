@@ -1,19 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:projet/components/TextField.dart';
+import 'package:projet/components/location_picker.dart';
+import 'package:projet/constants.dart';
 import '../modals/property.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
 
 class PublishPage extends StatefulWidget {
   // final Function(Property) onAddProperty;
 
-  const PublishPage({
-    super.key,
-    // required this.onAddProperty,
-    // required Map<String, List<String>> municipalitiesByProvince,
-  });
+  const PublishPage({super.key});
 
   @override
   State<PublishPage> createState() => _PublishPageState();
@@ -24,19 +25,12 @@ class _PublishPageState extends State<PublishPage> {
   List<File> interiorImages = [];
   final titleController = TextEditingController();
   final priceController = TextEditingController();
-  final landSizeController = TextEditingController();
-  final bedroomController = TextEditingController();
-  final kitchenController = TextEditingController();
-  final bathroomController = TextEditingController();
-
-  bool isSponsored = false;
-  bool hasWifi = false;
-  bool hasParking = false;
-  bool isFurnished = false;
-
-  String? selectedProvince;
-  String? selectedMunicipality;
-  DateTime? constructionDate;
+  final surfaceController = TextEditingController();
+  final cityController = TextEditingController();
+  final regionController = TextEditingController();
+  final typeController = TextEditingController();
+  final roomsController = TextEditingController();
+  String? location;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -54,20 +48,6 @@ class _PublishPageState extends State<PublishPage> {
     if (pickedFiles.isNotEmpty) {
       setState(() {
         interiorImages = pickedFiles.map((e) => File(e.path)).toList();
-      });
-    }
-  }
-
-  Future<void> _pickConstructionDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        constructionDate = picked;
       });
     }
   }
@@ -95,315 +75,255 @@ class _PublishPageState extends State<PublishPage> {
     if (_image != null &&
         titleController.text.isNotEmpty &&
         priceController.text.isNotEmpty) {
-      // Get the project directory
-      final projectDir = Directory(r'C:\Users\edhim\Desktop\uni_project\projet'); // Ensure this is your actual project path
+      final imageBytes = await _image?.readAsBytes();
+      final imageBase64 = base64Encode(imageBytes!);
 
-      // Define the 'uploads' directory inside the project directory
-      final uploadsDir = Directory(path.join(projectDir.path, 'uploads'));
-
-      // If the "uploads" folder doesn't exist, create it
-      if (!(await uploadsDir.exists())) {
-        await uploadsDir.create(recursive: true);
+      final interiorImages64 = await Future.wait(
+        interiorImages.map((img) async {
+          final bytes = await img.readAsBytes();
+          return base64Encode(bytes);
+        }),
+      );
+      final data = {
+        'description': titleController.text,
+        'price': priceController.text,
+        'surface': surfaceController.text,
+        'nb_rooms': roomsController.text,
+        'type': typeController.text,
+        'region': regionController.text,
+        'city': cityController.text,
+        'location': location,
+        'mainImage': imageBase64,
+        'images': interiorImages64,
+      };
+      final url = Uri.parse('$apiUrl/create');
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(data),
+        );
+        if (response.statusCode == 200) {
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text("Succès"),
+                  content: const Text("Logement ajouté avec succès."),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context, rootNavigator: true).pop();
+                      },
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+          );
+        } else {
+          showDialog(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: Text("Erreur"),
+                  content: Text(
+                    "Échec de l'ajout du logement. Code: ${response.statusCode}",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text("OK"),
+                    ),
+                  ],
+                ),
+          );
+        }
+      } catch (error) {
+        print(error);
       }
-
-      // Create a unique file name using UUID and keep the original extension
-      var uuid = Uuid();
-      String extension = path.extension(_image!.path); // Get the file extension
-      String uniqueFileName = '${uuid.v4()}$extension';
-
-      // Construct the full path where the image will be saved
-      String imagePath = path.join(uploadsDir.path, uniqueFileName);
-
-      // Copy the image file to the uploads directory
-      final savedImage = await File(_image!.path).copy(imagePath);
-
-      // Now use the savedImage for the Property
-      final location = "$selectedMunicipality, $selectedProvince";
-
-      final property = Property(
-        title: titleController.text,
-        price: priceController.text,
-        location: location,
-        image: savedImage, // Use the saved image here
-        interiorImages: interiorImages, // You might also want to save these similarly
-        landSize: landSizeController.text,
-        bedrooms: bedroomController.text,
-        kitchens: kitchenController.text,
-        bathrooms: bathroomController.text,
-        constructionDate: constructionDate,
-        hasWifi: hasWifi,
-        hasParking: hasParking,
-        isFurnished: isFurnished,
-        isSponsored: isSponsored,
-        isPending: true,
-      );
-
-      // Show success dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Succès"),
-          content: const Text("Logement ajouté avec succès."),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context, rootNavigator: true).pop();
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
     } else {
       // Optionally show a validation error
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Erreur"),
-          content: const Text(
-            "Veuillez remplir tous les champs et sélectionner une image.",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context, rootNavigator: true).pop();
-              },
-              child: const Text("OK"),
+        builder:
+            (context) => AlertDialog(
+              title: const Text("Erreur"),
+              content: const Text(
+                "Veuillez remplir tous les champs et sélectionner une image.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F5FA),
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
-        title: const Text("Publier un logement"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // image principale
-              GestureDetector(
-                onTap:
-                    _image == null
-                        ? _pickImage
-                        : () => _openImageFullScreen(_image!),
-                child:
-                    _image == null
-                        ? Container(
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // main image
+            GestureDetector(
+              onTap:
+                  _image == null
+                      ? _pickImage
+                      : () => _openImageFullScreen(_image!),
+              child:
+                  _image == null
+                      // if no image was picked
+                      ? Container(
+                        height: 180,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.camera_alt,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                      // if there was an image
+                      : ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          _image!,
                           height: 180,
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 50,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        )
-                        : ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.file(
-                            _image!,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                          fit: BoxFit.cover,
                         ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _pickInteriorImages,
-                icon: const Icon(Icons.photo_library),
-                label: const Text("Ajouter photos de l'intérieur"),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children:
-                    interiorImages.map((file) {
-                      return GestureDetector(
-                        onTap: () => _openImageFullScreen(file),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            file,
-                            height: 80,
-                            width: 80,
-                            fit: BoxFit.cover,
-                          ),
+                      ),
+            ),
+            const SizedBox(height: 16),
+
+            // secondairy images picker
+            ElevatedButton.icon(
+              onPressed: _pickInteriorImages,
+              icon: const Icon(Icons.photo_library),
+              label: const Text("more images"),
+            ),
+            const SizedBox(height: 10),
+
+            // list of picked images
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  interiorImages.map((file) {
+                    return GestureDetector(
+                      onTap: () => _openImageFullScreen(file),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          file,
+                          height: 80,
+                          width: 80,
+                          fit: BoxFit.cover,
                         ),
-                      );
-                    }).toList(),
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(titleController, "Titre", Icons.title),
-              const SizedBox(height: 10),
-              _buildTextField(
-                priceController,
-                "Prix",
-                Icons.attach_money,
-                true,
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                landSizeController,
-                "Surface du terrain (m²)",
-                Icons.landscape,
-                true,
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                bedroomController,
-                "Nombre de chambres",
-                Icons.bed,
-                true,
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                kitchenController,
-                "Nombre de cuisines",
-                Icons.kitchen,
-                true,
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                bathroomController,
-                "Nombre de salles de bain",
-                Icons.bathtub,
-                true,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: Colors.grey),
-                  const SizedBox(width: 10),
-                  Text(
-                    constructionDate != null
-                        ? "Construit en : ${constructionDate!.toLocal().toString().split(' ')[0]}"
-                        : "Date de construction non spécifiée",
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _pickConstructionDate,
-                    child: const Text("Choisir"),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                      ),
+                    );
+                  }).toList(),
+            ),
+            const SizedBox(height: 16),
 
-              const SizedBox(height: 10),
+            CustomTextField(
+              controller: titleController,
+              label: "title",
+              icon: Icons.title,
+            ),
+            const SizedBox(height: 10),
 
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                title: const Text("Wi-Fi disponible"),
-                value: hasWifi,
-                onChanged: (value) => setState(() => hasWifi = value ?? false),
-              ),
-              CheckboxListTile(
-                title: const Text("Meublé"),
-                value: isFurnished,
-                onChanged:
-                    (value) => setState(() => isFurnished = value ?? false),
-              ),
-              CheckboxListTile(
-                title: const Text("Parking disponible"),
-                value: hasParking,
-                onChanged:
-                    (value) => setState(() => hasParking = value ?? false),
-              ),
-              CheckboxListTile(
-                title: const Text("Sponsoriser ce logement"),
-                value: isSponsored,
-                onChanged:
-                    (value) => setState(() => isSponsored = value ?? false),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            CustomTextField(
+              controller: priceController,
+              label: "price",
+              icon: Icons.attach_money,
+            ),
+            const SizedBox(height: 10),
+
+            CustomTextField(
+              controller: surfaceController,
+              label: "Surface (m²)",
+              icon: Icons.landscape,
+            ),
+            const SizedBox(height: 10),
+
+            CustomTextField(
+              controller: roomsController,
+              label: "number of rooms",
+              icon: Icons.bed,
+              isNumeric: true,
+            ),
+            const SizedBox(height: 10),
+
+            CustomTextField(
+              controller: regionController,
+              label: "region",
+              icon: Icons.track_changes,
+            ),
+            const SizedBox(height: 10),
+
+            CustomTextField(
+              controller: cityController,
+              label: "city",
+              icon: Icons.location_city,
+            ),
+            const SizedBox(height: 10),
+
+            CustomTextField(
+              controller: typeController,
+              label: "type",
+              icon: Icons.house,
+            ),
+            const SizedBox(height: 20),
+
+            PickLocationBox(
+              onLocationPicked:
+                  (cords) => {
+                    setState(() {
+                      location = cords;
+                    }),
+                  },
+            ),
+
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  onPressed: _submit,
-                  child: Text(
-                    "Publier",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                onPressed: _submit,
+                child: Text(
+                  "Submit",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, [
-    bool isNumeric = false,
-  ]) {
-    return TextField(
-      controller: controller,
-      keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(
-    String label,
-    IconData icon,
-    List<String> items,
-    String? value,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      items:
-          items
-              .map(
-                (item) =>
-                    DropdownMenuItem<String>(value: item, child: Text(item)),
-              )
-              .toList(),
-      onChanged: onChanged,
     );
   }
 }

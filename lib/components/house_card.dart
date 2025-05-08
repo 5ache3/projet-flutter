@@ -3,10 +3,12 @@ import 'package:projet/components/imagesSlider.dart';
 import 'package:projet/modals/CustomImage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:projet/constants.dart';
+import 'package:projet/pages/house_page.dart';
+
 class Room {
   final String type;
   final List<CustomImage> images;
-
   Room({required this.type, required this.images});
 }
 
@@ -44,25 +46,18 @@ class HouseCard extends StatefulWidget {
   State<HouseCard> createState() => _HouseCardState();
 }
 
-
-
 class _HouseCardState extends State<HouseCard> {
   late bool _fav;
 
   Future<void> toggleFavorites() async {
     final String userId = '1';
-    final url = Uri.parse('http://192.168.100.3:5000/favorites/$userId');
+    final url = Uri.parse('$apiUrl/favorites/$userId');
 
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'user_id': userId,
-          'house_id': widget.id,
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId, 'house_id': widget.id}),
       );
     } catch (e) {
       print('Error: $e');
@@ -74,9 +69,27 @@ class _HouseCardState extends State<HouseCard> {
     super.initState();
     _fav = widget.isfav;
   }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return GestureDetector(
+      onDoubleTap: ()=>{
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) =>
+              HousePage(id: widget.id,
+                  surface: widget.surface,
+                  admin_id: widget.admin_id,
+                  region: widget.region,
+                  ville: widget.ville,
+                  type: widget.type,
+                  location: widget.location,
+                  price: widget.price,
+                  images: widget.images,
+                  isfav: widget.isfav)),
+        )
+      },
+      child:Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Column(
@@ -97,8 +110,7 @@ class _HouseCardState extends State<HouseCard> {
                     });
                   },
                   child: Icon(
-                    _fav ? Icons.favorite :
-                    Icons.favorite_border,
+                    _fav ? Icons.favorite : Icons.favorite_border,
                     color: _fav ? Colors.red : Colors.white,
                     size: 28,
                   ),
@@ -109,7 +121,10 @@ class _HouseCardState extends State<HouseCard> {
                 bottom: 10,
                 right: 10,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   color: Colors.black54,
                   child: Text(
                     '\$${widget.price}',
@@ -136,15 +151,12 @@ class _HouseCardState extends State<HouseCard> {
                   'price : ${widget.price}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-
               ],
             ),
           ),
-
-
         ],
       ),
+    ),
     );
   }
 }
-

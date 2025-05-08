@@ -20,10 +20,10 @@
 </head>
 <body>
     <div class="container my-4" style="margin-left: auto; margin-right: auto;">
-        <h1 class="text-center mb-4">Liste des Articles</h1>
+        <h1 class="text-center mb-4">Liste des logements</h1>
         <div class="d-flex justify-content-end mb-3">
             <a href="/create" class="btn btn-primary">
-                <i class="fa fa-plus"></i> Ajouter un article
+                <i class="fa fa-plus"></i> Ajouter
             </a>
         </div>
         <table id="articlesTable" class="table table-striped table-bordered">
@@ -31,8 +31,8 @@
                 <tr>
                     <th>ID</th>
                     <th>Image</th>
-                    <th>Nom</th>
                     <th>Description</th>
+                    <th>ville</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -50,9 +50,9 @@
                     <td>{{ item[1] }}</td>
                     <td>{{ item[2] }}</td>
                     <td class="text-center">
-                        <a href="/update/{{ item[0] }}" class="btn btn-sm btn-warning" title="Modifier">
+                        <!-- <a href="/update/{{ item[0] }}" class="btn btn-sm btn-warning" title="Modifier">
                             <i class="fa fa-edit"></i>
-                        </a>
+                        </a> -->
                         <form action="/delete_house/{{ item[0] }}" method="delete" style="display:inline;" title="Supprimer">
                             <button type="submit" class="btn btn-sm btn-danger">
                                 <i class="fa fa-trash"></i>
