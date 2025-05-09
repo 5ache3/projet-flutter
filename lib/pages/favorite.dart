@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:projet/components/house_card_caller.dart';
 import 'package:http/http.dart' as http;
 import 'package:projet/constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class Favorite_page extends StatefulWidget {
-  const Favorite_page({super.key});
+  final String user_id;
+  const Favorite_page({super.key,required this.user_id});
 
   @override
   State<Favorite_page> createState() => _Favorite_pageState();
@@ -15,6 +18,8 @@ class Favorite_page extends StatefulWidget {
 class _Favorite_pageState extends State<Favorite_page> {
   List _items = [];
   List _favorites = [];
+  String? user_id;
+  String? user_role;
   @override
   void initState() {
     super.initState();
@@ -22,6 +27,7 @@ class _Favorite_pageState extends State<Favorite_page> {
   }
 
   Future<void> initPage() async {
+    await getTokenData();
     await fetchFavorites();
     await fetchData();
   }
@@ -37,10 +43,27 @@ class _Favorite_pageState extends State<Favorite_page> {
       });
     }
   }
+  final storage = FlutterSecureStorage();
+
+  Future<void> getTokenData() async {
+    String? token = await storage.read(key: 'token');
+
+    if (token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token)['sub'];
+
+      final userId = decodedToken['user_id'];
+      final role = decodedToken['role'];
+      setState(() {
+        user_id=userId;
+        user_role=role;
+      });
+
+    }
+  }
+
 
   Future<void> fetchFavorites() async {
-    final int userId = 1;
-    final url = Uri.parse('$apiUrl/favorites/$userId');
+    final url = Uri.parse('$apiUrl/favorites/${user_id}');
 
     try {
       final response = await http.get(url);
@@ -57,7 +80,7 @@ class _Favorite_pageState extends State<Favorite_page> {
 
   Future<void> fetchData() async {
     final String fallbackData = await rootBundle.loadString('assets/file.json');
-    final url = Uri.parse('$apiUrl/favorites/1');
+    final url = Uri.parse('$apiUrl/favorites/${user_id}');
 
     try {
       final response = await http.get(url);
@@ -79,10 +102,11 @@ class _Favorite_pageState extends State<Favorite_page> {
 
   @override
   Widget build(BuildContext context) {
-    return _items.isEmpty
+    return (_items.isEmpty && user_id!=null)
         ?
         // if no items found
-        Text('no elements')
+      Center(child: Text('no elements'),)
+
         // else we will show the list
         : Column(
           children: [

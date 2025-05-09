@@ -13,6 +13,8 @@ dependencies:
   http: ^1.1.0
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
+  flutter_secure_storage: ^9.0.0
+  jwt_decoder: ^2.0.1
   flutter:
     sdk: flutter
   uuid: ^4.0.0
@@ -37,5 +39,6 @@ flutter:
     - assets/file.json
     - assets/images/
     - api/static/uploads/
+    - api/static/
   
 

@@ -19,6 +19,8 @@ pool=db.cursor()
 
 app = Flask(__name__)
 
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+jwt = JWTManager(app)
 
 UPLOAD_FOLDER = 'api/static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -67,35 +69,49 @@ def delete_image(url):
 @app.route('/register',methods=['POST'])
 
 def register():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    pool.execute("SELECT * FROM users WHERE username =%s",(username,))
-    exist=pool.fetchall()
-    if exist:
-        return jsonify({"error": "User already exists"}), 400
-    hashed_password=bcrypt.hash(password)
-    user_id = uuid.uuid4().hex
-    pool.execute("INSERT INTO users(id,username,password,role) VALUES(%s,%s,%s,'user')",(user_id,username,hashed_password))
-    db.commit()
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        pool.execute("SELECT * FROM users WHERE username =%s",(username,))
+        exist=pool.fetchall()
+        if exist:
+            return jsonify({"error": "User already exists"}), 400
+        hashed_password=bcrypt.hash(password)
+        user_id = uuid.uuid4().hex
+        pool.execute("INSERT INTO users(id,username,password,role) VALUES(%s,%s,%s,'user')",(user_id,username,hashed_password))
+        db.commit()
+
+        access_token = create_access_token(identity={
+            'username': username,
+            'user_id': user_id,
+            'role': 'user'
+        })
+
+        return jsonify(access_token=access_token), 200
+    except Exception as e:
+        return jsonify({'error':e}),500
 
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    pool.execute("SELECT user_id,username,password,role FROM users WHERE username =%s",(username,))
-    user=pool.fetchone()
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        pool.execute("SELECT id,username,password,role FROM users WHERE username =%s",(username,))
+        user=pool.fetchone()
 
-    if not user:
-        return jsonify({"error": "username not found"}), 400
-    
-    if not bcrypt.verify(password, user[2]):
-        return jsonify({"error": "wrong password"}), 403
+        if not user:
+            return jsonify({"error": "username not found"}), 400
+        
+        if not bcrypt.verify(password, user[2]):
+            return jsonify({"error": "wrong password"}), 403
+    except Exception as e:
+        return jsonify({'error':e}),500
     
     user_id=user[0]
     username=user[1]
-    role=[3]
+    role=user[3]
     access_token = create_access_token(identity={
         'username': username,
         'user_id': user_id,

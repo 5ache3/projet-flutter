@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:projet/components/house_card_caller.dart';
 import 'package:http/http.dart' as http;
 import 'package:projet/constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class Featured_page extends StatefulWidget {
   const Featured_page({super.key});
@@ -15,6 +17,8 @@ class Featured_page extends StatefulWidget {
 class _Featured_pageState extends State<Featured_page> {
   List _items = [];
   List _favorites = [];
+  String? user_id;
+  String? user_role;
 
   @override
   void initState() {
@@ -23,8 +27,26 @@ class _Featured_pageState extends State<Featured_page> {
   }
 
   Future<void> initPage() async {
+    await getTokenData();
     await fetchFavorites();
     await fetchData();
+  }
+
+  final storage = FlutterSecureStorage();
+
+  Future<void> getTokenData() async {
+    String? token = await storage.read(key: 'token');
+
+    if (token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token)['sub'];
+
+      final userId = decodedToken['user_id'];
+      final role = decodedToken['role'];
+      setState(() {
+        user_id = userId;
+        user_role = role;
+      });
+    }
   }
 
   Future<void> fetchData() async {
@@ -67,8 +89,7 @@ class _Featured_pageState extends State<Featured_page> {
   }
 
   Future<void> fetchFavorites() async {
-    final String userId = '1';
-    final url = Uri.parse('$apiUrl/favorites/$userId');
+    final url = Uri.parse('$apiUrl/favorites/${user_id}');
 
     try {
       final response = await http.get(url);

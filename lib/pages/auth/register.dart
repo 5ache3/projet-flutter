@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:projet/components/TextField.dart';
 import 'package:projet/components/button.dart';
+import 'package:projet/constants.dart';
 import 'package:projet/pages/auth/login.dart';
 import 'package:projet/pages/home_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -15,6 +19,34 @@ class _SignupPageState extends State<SignupPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   final password2Controller = TextEditingController();
+  bool hidden=true;
+  final storage = FlutterSecureStorage();
+  void _submit(){
+    register(usernameController.text,passwordController.text);
+  }
+  Future<bool> register(String username, String password) async {
+    final url = Uri.parse('$apiUrl/register');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      await storage.write(key: 'token', value: data['access_token']);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage())
+      );
+      return true;
+    } else {
+
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,48 +56,56 @@ class _SignupPageState extends State<SignupPage> {
         Padding(
             padding: const EdgeInsets.all(16),
             child:
-            Column(
-              children: [
-                const SizedBox(height: 50),
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 50),
+              
+                  Icon(Icons.house,size: 120,),
 
-                GestureDetector(
-                  onTap: ()=>{
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    )
-                  },
-                    child: Icon(Icons.house,size: 120,)),
-                const SizedBox(height: 40,),
-
-                CustomTextField(controller: usernameController, label: 'username or email', icon: Icons.person),
-                const SizedBox(height: 10,),
-                CustomTextField(controller: passwordController, label: 'password', icon: Icons.password,passwd: true,),
-                const SizedBox(height: 20,),
-                CustomTextField(controller: passwordController, label: 'password', icon: Icons.password,passwd: true,),
-                const SizedBox(height: 20,),
-
-                CustomButton(action: ()=>{}, label: 'Sign Up'),
-                const SizedBox(height: 10,),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      child: Text("Have an acount? login now",
-                        style: TextStyle(color: Colors.blue[900]
+                  const SizedBox(height: 20,),
+                  Text("SIGN UP",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 20,letterSpacing: 3),),
+                  const SizedBox(height: 40,),
+                  CustomTextField(controller: usernameController, label: 'username or email', icon: Icons.person),
+                  const SizedBox(height: 10,),
+                  CustomTextField(
+                    controller: passwordController,
+                    label: 'password',
+                    icon: Icons.password,
+                    passwd: hidden,
+                    icon2: hidden?Icons.visibility_off : Icons.visibility,
+                    onClicked: ()=>{
+                      setState(() {
+                        hidden=!hidden;
+                      })
+                    },
+                  ),
+                  const SizedBox(height: 20,),
+                  // CustomTextField(controller: password2Controller, label: 'password', icon: Icons.password,passwd: true,),
+                  // const SizedBox(height: 20,),
+              
+                  CustomButton(action: _submit, label: 'Sign Up'),
+                  const SizedBox(height: 10,),
+              
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                        child: Text("Have an acount? login now",
+                          style: TextStyle(color: Colors.blue[900]
+                          ),
                         ),
-                      ),
-                      onTap: ()=>{
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => LoginPage()),
-                        )
-                      },
-                    )
-                  ],
-                )
-              ],
+                        onTap: ()=>{
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => LoginPage()),
+                          )
+                        },
+                      )
+                    ],
+                  )
+                ],
+              ),
             )),
       )),
     );

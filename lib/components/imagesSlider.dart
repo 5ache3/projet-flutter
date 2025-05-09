@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import 'package:another_carousel_pro/another_carousel_pro.dart';
+import 'package:projet/constants.dart';
 import 'package:projet/modals/CustomImage.dart';
 
 class ImageSlider extends StatefulWidget {
@@ -19,7 +20,10 @@ class _ImageSliderState extends State<ImageSlider> {
       child: AnotherCarousel(
         images:
             widget.images.map((img) {
-              return Image.asset(img.url, fit: BoxFit.cover);
+              String url=img.url;
+              url=url.replaceFirst('/api/','api/');
+              String imgurl='$apiUrl/${url.replaceFirst('api/','')}';
+              return Image.network(imgurl, fit: BoxFit.cover);
             }).toList(),
         dotSize: 3.0,
         borderRadius: true,

@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:projet/constants.dart';
 import 'package:projet/pages/house_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class Room {
   final String type;
@@ -48,16 +50,38 @@ class HouseCard extends StatefulWidget {
 
 class _HouseCardState extends State<HouseCard> {
   late bool _fav;
+  String? user_id;
+  String? user_role;
+
+  Future<void> initPage() async {
+    await getTokenData();
+  }
+
+  final storage = FlutterSecureStorage();
+
+  Future<void> getTokenData() async {
+    String? token = await storage.read(key: 'token');
+
+    if (token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token)['sub'];
+
+      final userId = decodedToken['user_id'];
+      final role = decodedToken['role'];
+      setState(() {
+        user_id = userId;
+        user_role = role;
+      });
+    }
+  }
 
   Future<void> toggleFavorites() async {
-    final String userId = '1';
-    final url = Uri.parse('$apiUrl/favorites/$userId');
+    final url = Uri.parse('$apiUrl/favorites/$user_id');
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': userId, 'house_id': widget.id}),
+        body: jsonEncode({'user_id': user_id, 'house_id': widget.id}),
       );
     } catch (e) {
       print('Error: $e');
@@ -68,95 +92,101 @@ class _HouseCardState extends State<HouseCard> {
   void initState() {
     super.initState();
     _fav = widget.isfav;
+    initPage();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onDoubleTap: ()=>{
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) =>
-              HousePage(id: widget.id,
-                  surface: widget.surface,
-                  admin_id: widget.admin_id,
-                  region: widget.region,
-                  ville: widget.ville,
-                  type: widget.type,
-                  location: widget.location,
-                  price: widget.price,
-                  images: widget.images,
-                  isfav: widget.isfav)),
-        )
-      },
-      child:Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ImageSlider(images: widget.images),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: GestureDetector(
-                  onTap: () {
-                    toggleFavorites();
-                    widget.onChange(widget.id);
-                    setState(() {
-                      _fav = !_fav;
-                    });
-                  },
-                  child: Icon(
-                    _fav ? Icons.favorite : Icons.favorite_border,
-                    color: _fav ? Colors.red : Colors.white,
-                    size: 28,
-                  ),
-                ),
+      onDoubleTap:
+          () => {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => HousePage(
+                      id: widget.id,
+                      surface: widget.surface,
+                      admin_id: widget.admin_id,
+                      region: widget.region,
+                      ville: widget.ville,
+                      type: widget.type,
+                      location: widget.location,
+                      price: widget.price,
+                      images: widget.images,
+                      isfav: widget.isfav,
+                    ),
               ),
-              // Price tag
-              Positioned(
-                bottom: 10,
-                right: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  color: Colors.black54,
-                  child: Text(
-                    '\$${widget.price}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+            ),
+          },
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ImageSlider(images: widget.images),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () {
+                      toggleFavorites();
+                      widget.onChange(widget.id);
+                      setState(() {
+                        _fav = !_fav;
+                      });
+                    },
+                    child: Icon(
+                      _fav ? Icons.favorite : Icons.favorite_border,
+                      color: _fav ? Colors.red : Colors.white,
+                      size: 28,
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  '${widget.type} • ${widget.surface}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                Text(
-                  'price : ${widget.price}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                // Price tag
+                Positioned(
+                  bottom: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    color: Colors.black54,
+                    child: Text(
+                      '\$${widget.price}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Text(
+                    '${widget.type} • ${widget.surface}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  Text(
+                    'price : ${widget.price}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
