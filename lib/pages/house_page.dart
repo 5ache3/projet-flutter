@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:projet/components/imagesSlider.dart';
 import 'package:projet/modals/CustomImage.dart';
 import 'package:http/http.dart' as http;
@@ -132,7 +133,18 @@ class _HousePageState extends State<HousePage> {
                       ),
                     )
                     : SizedBox(height: 10),
-
+                ElevatedButton(
+                  onPressed: () {
+                    Get.snackbar(
+                      "Hello",
+                      "This is a test snackbar",
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.black,
+                      colorText: Colors.white,
+                    );
+                  },
+                  child: const Text("Test Snackbar"),
+                ),
                 _Title("Images"),
                 ImageSlider(images: widget.images),
                 SizedBox(height: 10),

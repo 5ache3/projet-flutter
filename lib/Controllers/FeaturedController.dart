@@ -1,34 +1,38 @@
+// lib/controllers/featured_controller.dart
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:projet/constants.dart';
-import '../components/house_card_caller.dart';
+
+import '../constants.dart';
 
 class FeaturedController extends GetxController {
-  final items = <dynamic>[].obs;
+  // ───────── STATE ─────────
+  final items     = <dynamic>[].obs;
   final favorites = <String>[].obs;
   final isLoading = false.obs;
 
   final _storage = const FlutterSecureStorage();
   String? _userId;
 
+  // ───────── LIFECYCLE ─────────
   @override
   void onInit() {
     super.onInit();
+    print('🔄 FeaturedController started');
     _initPage();
   }
 
-  Future<void> refreshData() => _initPage();
-
+  // ───────── PUBLIC API ─────────
   void toggleFavorite(String id) {
     favorites.contains(id) ? favorites.remove(id) : favorites.add(id);
     _toggleFavoriteApi(id);
   }
 
+  // ───────── INTERNAL ─────────
   Future<void> _initPage() async {
     try {
       isLoading.value = true;
@@ -61,22 +65,26 @@ class FeaturedController extends GetxController {
       if (res.statusCode == 200) {
         items.value = jsonDecode(res.body);
       } else {
+        debugPrint('GET /get → ${res.statusCode}');
         items.value = jsonDecode(fallbackJson);
       }
     } catch (e) {
+      debugPrint('Fetch items failed: $e');
       items.value = jsonDecode(fallbackJson);
     }
   }
 
   Future<void> _fetchFavorites() async {
     if (_userId == null) return;
-    final url = Uri.parse('$apiUrl/favorites/$_userId');
 
+    final url = Uri.parse('$apiUrl/favorites/$_userId');
     try {
       final res = await http.get(url).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as List;
         favorites.value = data.map((e) => e['id'].toString()).toList();
+      } else {
+        debugPrint('GET /favorites → ${res.statusCode}');
       }
     } catch (e) {
       debugPrint('Fetch favorites failed: $e');
@@ -86,66 +94,14 @@ class FeaturedController extends GetxController {
   Future<void> _toggleFavoriteApi(String houseId) async {
     if (_userId == null) return;
     final url = Uri.parse('$apiUrl/favorites/$_userId');
-
     try {
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'user_id': _userId, 'house_id': houseId}),
-      );
+      await http
+          .post(url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'user_id': _userId, 'house_id': houseId}))
+          .timeout(const Duration(seconds: 15));
     } catch (e) {
       debugPrint('Toggle favorite API error: $e');
     }
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Featured_page extends StatelessWidget {
-  const Featured_page({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(FeaturedController());
-
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      return Scaffold(
-        body: RefreshIndicator(
-          onRefresh: () async {
-            await controller.refreshData();
-          },
-          child: ListView.builder(
-            itemCount: controller.items.length,
-            itemBuilder: (context, i) {
-              final item = controller.items[i];
-              final isFav = controller.favorites.contains(item['id']);
-
-              return HouseCardCaller(
-                file: item,
-                isfav: isFav,
-                onChange: controller.toggleFavorite,
-              );
-            },
-          ),
-        ),
-      );
-    });
   }
 }

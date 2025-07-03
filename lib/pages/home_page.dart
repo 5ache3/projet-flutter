@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         user_id = userId;
         user_role = role;
-        if (userId && user_role == 'admin') {
+        if (userId != null && userId.isNotEmpty) {
           _pages = [
             Featured_page(),
             Favorite_page(user_id: user_id!),

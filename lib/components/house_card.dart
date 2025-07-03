@@ -75,8 +75,9 @@ class _HouseCardState extends State<HouseCard> {
   }
 
   Future<void> toggleFavorites() async {
-    final url = Uri.parse('$apiUrl/favorites/$user_id');
 
+    final url = Uri.parse('$apiUrl/favorites/$user_id');
+    print(url);
     try {
       final response = await http.post(
         url,

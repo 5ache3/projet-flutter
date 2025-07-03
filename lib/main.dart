@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:projet/pages/auth/login.dart';
 import 'package:projet/pages/home_page.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,14 +50,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const MaterialApp(
+      return const GetMaterialApp(
         home: Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ),
       );
     }
 
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.light),
       home: userId != null ? const HomePage() : const LoginPage(),
