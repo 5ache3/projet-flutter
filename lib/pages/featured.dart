@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:projet/constants.dart';
+import 'package:projet/services/database_service.dart';
 import '../components/house_card_caller.dart';
 
 class FeaturedController extends GetxController {
@@ -53,18 +54,42 @@ class FeaturedController extends GetxController {
   }
 
   Future<void> _fetchItems() async {
-    final fallbackJson = await rootBundle.loadString('assets/file.json');
+    final fallbackData = await DatabaseService.instance.getHouses();
     final url = Uri.parse('$apiUrl/get');
-
+    List<dynamic> fetchedData;
     try {
       final res = await http.get(url).timeout(const Duration(seconds: 15));
       if (res.statusCode == 200) {
-        items.value = jsonDecode(res.body);
+        fetchedData = jsonDecode(res.body);
+        items.value=fetchedData;
       } else {
-        items.value = jsonDecode(fallbackJson);
+        items.value = fallbackData;
+        return;
+      }
+      await DatabaseService.instance.deleteAll();
+
+      for (var i = 0; i < (fetchedData.length > 10 ? 10 : fetchedData.length); i++) {
+        final house = fetchedData[i];
+        final houseMap = {
+          'id': house['id'],
+          'admin_id': house['admin_id'],
+          'description': house['description'],
+          'price': house['price'],
+          'rooms': house['rooms'],
+          'surface': house['surface'],
+          'type': house['type'],
+          'location': house['location'],
+          'ville': house['ville'],
+          'region': house['region'],
+        };
+
+        final images = house['images'] != null ? List<String>.from(
+            house['images']) : <String>[];
+
+        await DatabaseService.instance.addHouse(houseMap, imageUrls: images);
       }
     } catch (e) {
-      items.value = jsonDecode(fallbackJson);
+      items.value = fallbackData;
     }
   }
 

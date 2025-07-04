@@ -8,8 +8,6 @@ import 'package:projet/constants.dart';
 import 'package:projet/pages/auth/login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:projet/pages/home_page.dart';
-
 class Room {
   final String type;
   final List<CustomImage> images;
@@ -112,7 +110,7 @@ class _HousePageState extends State<HousePage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                user_role == 'admin'
+                widget.admin_id==user_id
                     ? Container(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -133,18 +131,7 @@ class _HousePageState extends State<HousePage> {
                       ),
                     )
                     : SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    Get.snackbar(
-                      "Hello",
-                      "This is a test snackbar",
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.black,
-                      colorText: Colors.white,
-                    );
-                  },
-                  child: const Text("Test Snackbar"),
-                ),
+
                 _Title("Images"),
                 ImageSlider(images: widget.images),
                 SizedBox(height: 10),
